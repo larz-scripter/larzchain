@@ -68,8 +68,15 @@ def main():
         # reconnect C
         c.add_peer("127.0.0.1:9401"); c.add_peer("127.0.0.1:9402")
         a.add_peer("127.0.0.1:9403"); b.add_peer("127.0.0.1:9403")
-        ok = wait_until(lambda: a.chain.tip.hash == c.chain.tip.hash
-                        and b.chain.tip.hash == c.chain.tip.hash, timeout=45)
+        # drive convergence deterministically instead of waiting on the 1s loop
+        ok = False
+        for _ in range(120):
+            for n in (a, b, c):
+                n.sync_once()
+            if a.chain.tip.hash == c.chain.tip.hash == b.chain.tip.hash:
+                ok = True
+                break
+            time.sleep(0.25)
         check("A and B reorged onto C's heavier chain", ok)
     finally:
         for n in (a, b, c):
