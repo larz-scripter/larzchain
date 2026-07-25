@@ -17,7 +17,7 @@
   "maskableIconUrl": "https://larzos.com/larzchain/wallet/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "/tmp/twagen/android.keystore",
+    "path": "./android.keystore",
     "alias": "android"
   },
   "appVersionName": "1",
