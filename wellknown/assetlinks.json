@@ -1,8 +1,14 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.larzos.twa",
-    "sha256_cert_fingerprints": ["REPLACE_WITH_KEYSTORE_SHA256_AFTER_FIRST_BUILD"]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.larzos.twa",
+      "sha256_cert_fingerprints": [
+        "94:8D:A1:6F:B0:43:15:F3:A6:F5:6F:BA:B1:F0:96:1E:67:82:94:FF:E7:28:0B:01:76:B1:C3:9E:C1:C4:7E:31"
+      ]
+    }
   }
-}]
+]
