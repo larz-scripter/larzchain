@@ -27,6 +27,8 @@ which powers its block explorer and airdrop service.
 * **Wallet + CLI** (`wallet.py`, `cli.py`)
 * **Block explorer + web wallet + airdrop claim** — Larz-framework apps
   (`explorer.py`, `airdrop.py`)
+* **Pay-with-LARZ** — a Larz `PaymentProvider` (`larzpay.py`) so any framework
+  `@app.paid` route can be unlocked by an on-chain LARZ payment
 
 ## Coin parameters
 
@@ -69,9 +71,10 @@ python3 -m larzchain balance --node http://127.0.0.1:9333 --address L...
 python3 tests/test_chain.py     # 20 consensus checks (mining, halving, double-spend, reorg…)
 python3 tests/test_p2p.py       # 7 checks: 3 real nodes sync + gossip + reorg  (integration)
 python3 tests/test_airdrop.py   # 10 checks: pool funding, claim flow, explorer  (needs `pip install larz`)
+python3 tests/test_larzpay.py   # 7 checks: @app.paid unlocked by on-chain LARZ   (needs `pip install larz`)
 ```
 
-37 checks, no pytest. CI runs the deterministic consensus suite (`test_chain.py`);
+44 checks, no pytest. CI runs the deterministic consensus suite (`test_chain.py`);
 the socket-based P2P and framework-backed airdrop tests run locally as integration
 tests (real sockets are too timing-flaky for shared CI runners).
 
