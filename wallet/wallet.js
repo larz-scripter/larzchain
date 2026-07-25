@@ -171,6 +171,14 @@ const UI = {
     }catch(e){ $("senderr").textContent=e.message; }
     $("sendbtn").disabled=false; $("sendbtn").textContent="Review & send";
   },
+  async faucet(){
+    const b=$("faucetbtn"); b.disabled=true; b.textContent="Requesting…";
+    try{ const r=await api("/faucet/"+WALLET.address);
+      if(r.sent){ toast("Test LARZ sent! Confirms next block"); setTimeout(()=>refreshBalance().catch(()=>{}),4000); }
+      else toast(r.error==="rate limited" ? "Already claimed — try again later" : (r.error||"Faucet unavailable")); }
+    catch(e){ toast("Faucet unreachable"); }
+    b.disabled=false; b.textContent="Get test LARZ (faucet)";
+  },
   copy(text,msg){ navigator.clipboard?.writeText(text).then(()=>toast(msg||"Copied"),()=>toast("Copy failed")); },
   shareAddr(){ if(navigator.share) navigator.share({title:"My LarzCoin address", text:WALLET.address});
     else this.copy(WALLET.address,"Address copied"); },

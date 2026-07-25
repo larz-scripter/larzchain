@@ -21,7 +21,8 @@ from . import consensus as K
 
 
 class Node:
-    def __init__(self, host="127.0.0.1", port=9333, miner_address=None):
+    def __init__(self, host="127.0.0.1", port=9333, miner_address=None,
+                 persist_path=None, faucet_wallet=None, faucet_amount=2500000000):
         self.host = host
         self.port = port
         self.chain = Blockchain()
@@ -31,6 +32,60 @@ class Node:
         self.lock = threading.RLock()
         self._httpd = None
         self._stop = False
+        self.persist_path = persist_path
+        self.faucet_wallet = faucet_wallet      # a Wallet the faucet sends from
+        self.faucet_amount = faucet_amount      # sparks per claim (default 25 LARZ)
+        self._faucet_seen = {}                  # address -> last claim time
+        if persist_path:
+            self._load()
+
+    def faucet_send(self, address):
+        """Send test LARZ to `address`, rate-limited to 1/hour per address."""
+        if not self.faucet_wallet:
+            return {"error": "faucet disabled"}
+        now = time.time()
+        with self.lock:
+            last = self._faucet_seen.get(address, 0)
+            if now - last < 3600:
+                return {"error": "rate limited", "retry_after": int(3600 - (now - last))}
+            try:
+                tx = self.faucet_wallet.send(self.chain, address, self.faucet_amount)
+            except ValueError as e:
+                return {"error": "faucet empty: %s" % e}
+            self._faucet_seen[address] = now
+        if self.submit_tx(tx):
+            return {"sent": self.faucet_amount, "txid": tx.txid, "address": address}
+        return {"error": "not accepted (faucet utxos may be unconfirmed)"}
+
+    # -- persistence (JSON block store so the chain survives restarts) ----- #
+    def _load(self):
+        import os, json as _json
+        if not os.path.exists(self.persist_path):
+            return
+        try:
+            with open(self.persist_path) as f:
+                blocks = _json.load(f)
+            for bd in blocks:
+                try:
+                    self.chain.add_block(Block.from_dict(bd))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    def _save(self):
+        if not self.persist_path:
+            return
+        import json as _json, tempfile, os
+        try:
+            data = [b.to_dict() for b in self.chain.blocks[1:]]   # skip genesis
+            d = os.path.dirname(self.persist_path) or "."
+            fd, tmp = tempfile.mkstemp(dir=d)
+            with os.fdopen(fd, "w") as f:
+                _json.dump(data, f)
+            os.replace(tmp, self.persist_path)
+        except Exception:
+            pass
 
     @property
     def url(self):
@@ -76,6 +131,7 @@ class Node:
             if added:
                 for tx in block.transactions:
                     self.mempool.pop(tx.txid, None)
+                self._save()
         if added and gossip:
             self._gossip("/block", block.to_dict())
         return added
@@ -199,6 +255,9 @@ class Node:
                     return self._send(200, {"address": addr, "history": hist[-50:][::-1]})
                 if path.startswith("/mempool"):
                     return self._send(200, {"txs": [t.to_dict() for t in node.mempool.values()]})
+                if path.startswith("/faucet/"):
+                    addr = path.split("/faucet/")[1].split("?")[0]
+                    return self._send(200, node.faucet_send(addr))
                 return self._send(404, {"error": "unknown path"})
 
             def do_POST(self):
