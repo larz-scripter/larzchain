@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "larzchain"
+version = "0.1.0"
+description = "LarzCoin (LARZ) — a fair-launch, proof-of-work cryptocurrency. Pure Python, zero dependencies. Earned, never sold."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+keywords = ["blockchain", "cryptocurrency", "bitcoin", "proof-of-work", "secp256k1", "utxo", "fair-launch", "zero-dependency"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Security :: Cryptography",
+]
+dependencies = []
+
+[project.scripts]
+larzchain = "larzchain.cli:main"
+
+[project.urls]
+Homepage = "https://larzos.com/larz"
+
+[tool.setuptools.packages.find]
+include = ["larzchain*"]
