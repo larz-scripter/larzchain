@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e14">
+<title>Larz Wallet</title>
+<meta name="description" content="LarzCoin (LARZ) wallet — non-custodial. Create a wallet, receive, send and track LARZ. Keys stay on your device.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+:root{--bg:#0b0e14;--card:#151a26;--line:#232a3a;--fg:#e6eaf2;--dim:#93a0b4;
+--accent:#4ade80;--accent2:#22d3ee;--danger:#f87171;--code:#0e1220}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+header{padding:18px 20px 8px;display:flex;align-items:center;gap:10px}
+header .logo{color:var(--accent);font-size:22px;font-weight:800}
+header .sp{flex:1}
+main{flex:1;padding:8px 20px 90px}
+h1{font-size:22px;margin:.2em 0}h2{font-size:17px;margin:1.2em 0 .4em}
+.screen{display:none}.screen.on{display:block;animation:f .2s}
+@keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0}
+.bal{text-align:center;padding:26px 18px}
+.bal .amt{font-size:38px;font-weight:800;letter-spacing:-.02em}
+.bal .amt small{font-size:16px;color:var(--dim);font-weight:600}
+.bal .addr{color:var(--dim);font-size:13px;margin-top:6px;font-family:ui-monospace,monospace;word-break:break-all}
+.btn{display:block;width:100%;padding:14px;border:0;border-radius:12px;font-size:16px;font-weight:700;
+background:var(--accent);color:#05230f;margin:8px 0;cursor:pointer}
+.btn.sec{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.btn.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5}
+.row{display:flex;gap:10px}.row .btn{margin:8px 0}
+label{display:block;font-size:13px;color:var(--dim);margin:12px 0 4px}
+input{width:100%;padding:13px;background:var(--code);border:1px solid var(--line);border-radius:10px;
+color:var(--fg);font-size:16px;font-family:inherit}
+input.mono{font-family:ui-monospace,monospace;font-size:14px}
+.pin{display:flex;gap:10px;justify-content:center;margin:18px 0}
+.pin input{width:52px;height:60px;text-align:center;font-size:24px}
+.mono{font-family:ui-monospace,monospace;word-break:break-all}
+.note{background:#1a1206;border:1px solid #3a2a0a;color:#f0c060;border-radius:10px;padding:12px;font-size:13.5px;margin:12px 0}
+.danger-note{background:#1a0a0a;border-color:#3a1414;color:var(--danger)}
+.hist{list-style:none;padding:0;margin:0}
+.hist li{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.hist .pos{color:var(--accent);font-weight:700}
+.hist .sub{color:var(--dim);font-size:12px;font-family:ui-monospace,monospace}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+display:flex;max-width:460px;margin:0 auto;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.tabbar a{flex:1;text-align:center;color:var(--dim);text-decoration:none;font-size:11px;font-weight:700}
+.tabbar a.on{color:var(--accent)}.tabbar a svg{display:block;margin:0 auto 3px;width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9}
+#qr{display:flex;justify-content:center;margin:14px 0}#qr canvas,#qr img{border-radius:12px;background:#fff;padding:10px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#000;border:1px solid var(--line);
+color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+.small{color:var(--dim);font-size:12.5px}
+a{color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="app">
+<header><span class="logo">⚡</span><b>Larz Wallet</b><span class="sp"></span>
+<span id="netdot" class="small">•••</span></header>
+<main>
+
+<!-- ONBOARD -->
+<section id="s-onboard" class="screen">
+  <div class="bal"><div style="font-size:46px">⚡</div><h1>Larz Wallet</h1>
+  <p class="small">A non-custodial wallet for LarzCoin (LARZ). Your keys stay on this device.</p></div>
+  <button class="btn" onclick="UI.createFlow()">Create a new wallet</button>
+  <button class="btn sec" onclick="UI.show('import')">Import existing wallet</button>
+  <p class="note">⚠️ LarzCoin is experimental and earned, not sold. LARZ may be worth nothing.
+  Not an investment.</p>
+</section>
+
+<!-- CREATE (show key) -->
+<section id="s-create" class="screen">
+  <h1>Back up your wallet</h1>
+  <p class="small">This is your <b>private key</b> — the only way to restore this wallet.
+  Anyone with it controls your LARZ. Save it somewhere safe and secret.</p>
+  <div class="card mono" id="newkey"></div>
+  <button class="btn sec" onclick="UI.copy(document.getElementById('newkey').textContent,'Private key copied')">Copy private key</button>
+  <p class="danger-note note">We can't recover this for you. If you lose it, your LARZ is gone.</p>
+  <label><input type="checkbox" id="backedup"> I've saved my private key</label>
+  <button class="btn" id="createnext" disabled onclick="UI.show('setpin')">Continue</button>
+</section>
+
+<!-- IMPORT -->
+<section id="s-import" class="screen">
+  <h1>Import wallet</h1>
+  <label>Private key (64 hex characters)</label>
+  <input id="impkey" class="mono" placeholder="paste your private key" autocomplete="off">
+  <button class="btn" onclick="UI.importFlow()">Import</button>
+  <button class="btn sec" onclick="UI.show('onboard')">Back</button>
+</section>
+
+<!-- SET PIN -->
+<section id="s-setpin" class="screen">
+  <h1>Set a PIN</h1>
+  <p class="small">Your PIN encrypts the key stored on this device.</p>
+  <div class="pin" id="pinset"></div>
+  <button class="btn" onclick="UI.setPinFlow()">Set PIN &amp; finish</button>
+</section>
+
+<!-- UNLOCK -->
+<section id="s-unlock" class="screen">
+  <div class="bal"><div style="font-size:40px">🔒</div><h1>Enter PIN</h1></div>
+  <div class="pin" id="pinunlock"></div>
+  <button class="btn" onclick="UI.unlockFlow()">Unlock</button>
+  <p id="unlockerr" class="small" style="text-align:center;color:var(--danger)"></p>
+</section>
+
+<!-- HOME -->
+<section id="s-home" class="screen">
+  <div class="card bal">
+    <div class="amt"><span id="balamt">0</span> <small>LARZ</small></div>
+    <div class="addr" id="homeaddr" onclick="UI.copy(WALLET.address,'Address copied')"></div>
+  </div>
+  <div class="row"><button class="btn" onclick="UI.show('send')">Send</button>
+  <button class="btn sec" onclick="UI.show('receive')">Receive</button></div>
+  <h2>Recent activity</h2>
+  <ul class="hist" id="homehist"><li class="small">No activity yet.</li></ul>
+</section>
+
+<!-- SEND -->
+<section id="s-send" class="screen">
+  <h1>Send LARZ</h1>
+  <label>Recipient address</label>
+  <input id="sendto" class="mono" placeholder="L..." autocomplete="off">
+  <label>Amount (LARZ)</label>
+  <input id="sendamt" type="text" inputmode="decimal" placeholder="0.00">
+  <p class="small">Available: <span id="sendavail">0</span> LARZ</p>
+  <button class="btn" id="sendbtn" onclick="UI.sendFlow()">Review &amp; send</button>
+  <button class="btn sec" onclick="UI.show('home')">Cancel</button>
+  <p id="senderr" class="small" style="color:var(--danger)"></p>
+</section>
+
+<!-- RECEIVE -->
+<section id="s-receive" class="screen">
+  <h1>Receive LARZ</h1>
+  <p class="small">Share this address to receive LARZ. It's safe to share publicly.</p>
+  <div class="card mono" id="recvaddr" style="text-align:center;font-size:16px;line-height:1.7"></div>
+  <button class="btn" onclick="UI.copy(WALLET.address,'Address copied')">Copy address</button>
+  <button class="btn sec" onclick="UI.shareAddr()">Share</button>
+</section>
+
+<!-- HISTORY -->
+<section id="s-history" class="screen">
+  <h1>Activity</h1>
+  <ul class="hist" id="fullhist"><li class="small">Loading…</li></ul>
+</section>
+
+<!-- SETTINGS -->
+<section id="s-settings" class="screen">
+  <h1>Settings</h1>
+  <div class="card">
+    <label>Node URL</label>
+    <input id="nodeurl" class="mono">
+    <button class="btn sec" onclick="UI.saveNode()">Save node</button>
+  </div>
+  <div class="card">
+    <h2>Backup</h2>
+    <button class="btn sec" onclick="UI.exportKey()">Reveal private key</button>
+    <div id="revealed" class="mono" style="display:none"></div>
+  </div>
+  <div class="card">
+    <h2>Danger zone</h2>
+    <p class="small">Removing the wallet erases the key from this device. Make sure it's backed up.</p>
+    <button class="btn danger" onclick="UI.resetFlow()">Remove wallet</button>
+  </div>
+  <p class="small" style="text-align:center">Larz Wallet · <a href="/larzchain/">LarzChain</a> · experimental</p>
+</section>
+
+</main>
+
+<nav class="tabbar" id="tabbar" style="display:none">
+  <a data-tab="home" onclick="UI.show('home')"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>Home</a>
+  <a data-tab="receive" onclick="UI.show('receive')"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 3v13m0 0l-5-5m5 5l5-5M4 21h16"/></svg>Receive</a>
+  <a data-tab="history" onclick="UI.show('history')"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 8v4l3 2M21 12a9 9 0 11-9-9"/></svg>Activity</a>
+  <a data-tab="settings" onclick="UI.show('settings')"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 00-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 00-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 000 2l-2 1.5 2 3.5 2.4-1a7 7 0 001.7 1l.3 2.5h4l.3-2.5a7 7 0 001.7-1l2.4 1 2-3.5-2-1.5a7 7 0 00.1-1z"/></svg>Settings</a>
+</nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="larzwallet_crypto.js"></script>
+<script src="wallet.js"></script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

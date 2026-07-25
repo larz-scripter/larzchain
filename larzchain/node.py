@@ -177,6 +177,26 @@ class Node:
                     addr = path.split("/balance/")[1]
                     return self._send(200, {"address": addr,
                                             "balance": node.chain.balance(addr)})
+                if path.startswith("/utxos/"):
+                    addr = path.split("/utxos/")[1]
+                    with node.lock:
+                        utxos = [{"txid": op[0], "index": op[1], "amount": o.amount}
+                                 for op, o in node.chain.utxos_for(addr)]
+                    return self._send(200, {"address": addr, "utxos": utxos,
+                                            "balance": sum(u["amount"] for u in utxos)})
+                if path.startswith("/history/"):
+                    addr = path.split("/history/")[1].split("?")[0]
+                    hist = []
+                    with node.lock:
+                        for h, b in enumerate(node.chain.blocks):
+                            for tx in b.transactions:
+                                recv = sum(o.amount for o in tx.outputs if o.address == addr)
+                                if recv:
+                                    hist.append({"txid": tx.txid, "height": h,
+                                                 "amount": recv, "type": "receive",
+                                                 "time": b.header.timestamp,
+                                                 "coinbase": tx.is_coinbase})
+                    return self._send(200, {"address": addr, "history": hist[-50:][::-1]})
                 if path.startswith("/mempool"):
                     return self._send(200, {"txs": [t.to_dict() for t in node.mempool.values()]})
                 return self._send(404, {"error": "unknown path"})

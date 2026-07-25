@@ -1,0 +1,16 @@
+{
+  "name": "Larz Wallet",
+  "short_name": "LarzWallet",
+  "description": "Non-custodial LarzCoin (LARZ) wallet — your keys stay on your device.",
+  "start_url": "/larzchain/wallet/",
+  "scope": "/larzchain/wallet/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
