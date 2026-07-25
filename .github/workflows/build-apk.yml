@@ -1,5 +1,5 @@
 name: build wallet APK
-# Manual trigger only (APK builds consume CI minutes). Actions tab -> Run workflow.
+# Manual trigger (APK builds consume CI minutes). Actions tab -> Run workflow.
 on:
   workflow_dispatch:
 
@@ -10,10 +10,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17" }
+      - uses: android-actions/setup-android@v3
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
+
+      - name: Configure Bubblewrap (use CI JDK + Android SDK, no prompts)
+        run: |
+          mkdir -p ~/.bubblewrap
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_SDK_ROOT" > ~/.bubblewrap/config.json
+          cat ~/.bubblewrap/config.json
 
       - name: Generate signing keystore
         run: |
@@ -22,28 +29,25 @@ jobs:
             -storepass larzwallet -keypass larzwallet \
             -dname "CN=Larz Wallet, O=Larz OS, C=US"
 
-      - name: Print SHA-256 fingerprint (for assetlinks.json)
+      - name: SHA-256 fingerprint -> assetlinks
         run: |
-          echo "::group::assetlinks fingerprint"
           keytool -list -v -keystore twa/android.keystore -alias larzwallet \
-            -storepass larzwallet | grep "SHA256:" || true
-          echo "::endgroup::"
+            -storepass larzwallet | grep "SHA256:" | sed 's/.*SHA256: //' | tee twa/fingerprint.txt
 
-      - name: Build APK
+      - name: Build & sign APK
         working-directory: twa
         run: |
-          bubblewrap build --skipPwaValidation \
-            --manifest ./twa-manifest.json <<< $'larzwallet\nlarzwallet\n' || \
-          bubblewrap build --skipPwaValidation --manifest ./twa-manifest.json
+          yes no | bubblewrap build --skipPwaValidation || bubblewrap build --skipPwaValidation
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: larzwallet
           BUBBLEWRAP_KEY_PASSWORD: larzwallet
 
-      - name: Upload APK
+      - name: Upload APK + fingerprint
         uses: actions/upload-artifact@v4
         with:
-          name: LarzWallet-apk
+          name: LarzWallet
           path: |
             twa/app-release-signed.apk
-            twa/app-release-bundle.aab
+            twa/*.apk
+            twa/fingerprint.txt
           if-no-files-found: warn
