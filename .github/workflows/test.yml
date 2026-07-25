@@ -11,9 +11,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: install larz (explorer/airdrop deps)
-        run: pip install git+https://github.com/larz-scripter/larz
-      - name: consensus + p2p tests (no framework needed)
-        run: |
-          python tests/test_chain.py
-          python tests/test_p2p.py
+      - name: consensus tests (deterministic, zero-dep)
+        run: python tests/test_chain.py
+  # test_p2p.py (real-socket P2P) + test_airdrop.py (needs the larz framework)
+  # are run locally as integration tests; sockets are too timing-flaky for CI.

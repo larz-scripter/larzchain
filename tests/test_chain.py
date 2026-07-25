@@ -95,6 +95,29 @@ def main():
     else:
         check("block without valid PoW rejected", True)   # trivial target edge
 
+    # --- reorg onto a heavier chain (deterministic, no networking) -------- #
+    from larzchain.block import Block
+    base = Blockchain()
+    for _ in range(2):
+        mine_block(base, alice.address)
+    # clone, then build a heavier branch on the clone
+    heavy = Blockchain()
+    for bd in base.serialize_chain()[1:]:
+        heavy.add_block(Block.from_dict(bd))
+    for _ in range(3):
+        mine_block(heavy, bob.address)              # heavy is now 3 ahead-of-fork
+    mine_block(base, alice.address)                 # base diverges by 1
+    base_tip_before = base.tip.hash
+    # feed heavy's full chain into base (what a peer pull does)
+    for bd in heavy.serialize_chain():
+        blk = Block.from_dict(bd)
+        if blk.hash not in base.index:
+            base.add_block(blk)
+    check("reorged onto the heavier chain", base.tip.hash == heavy.tip.hash)
+    check("reorg changed the tip", base.tip.hash != base_tip_before)
+    check("reorg rebuilt UTXO set (bob credited on new chain)",
+          base.balance(bob.address) > 0)
+
     # --- halving math ----------------------------------------------------- #
     check("subsidy at height 1 = 50 LARZ", K.subsidy(1) == 50 * COIN)
     check("subsidy after 1 halving = 25 LARZ",

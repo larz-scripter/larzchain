@@ -66,12 +66,14 @@ python3 -m larzchain balance --node http://127.0.0.1:9333 --address L...
 ## Tests
 
 ```bash
-python3 tests/test_chain.py     # 17 consensus checks (mining, halving, double-spend…)
-python3 tests/test_p2p.py       # 7 checks: 3 nodes sync + gossip + reorg
-python3 tests/test_airdrop.py   # 10 checks: pool funding, claim flow, explorer
+python3 tests/test_chain.py     # 20 consensus checks (mining, halving, double-spend, reorg…)
+python3 tests/test_p2p.py       # 7 checks: 3 real nodes sync + gossip + reorg  (integration)
+python3 tests/test_airdrop.py   # 10 checks: pool funding, claim flow, explorer  (needs `pip install larz`)
 ```
 
-34 checks, no pytest. (The explorer/airdrop apps import the Larz framework.)
+37 checks, no pytest. CI runs the deterministic consensus suite (`test_chain.py`);
+the socket-based P2P and framework-backed airdrop tests run locally as integration
+tests (real sockets are too timing-flaky for shared CI runners).
 
 ## Status
 
