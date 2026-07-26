@@ -109,6 +109,25 @@ Then run with `--public-url https://your-domain/larzchain/rpc`.
 | `--report-url` | **opt-in** telemetry: POST health/errors to a collector (off by default) |
 | `--log` | also write logs to a file |
 
+## Faster sync (optional)
+
+Signature verification dominates the initial sync, and pure-Python is slow. Install the
+native `coincurve` backend for a **~800x** verification speedup:
+
+```bash
+pip install coincurve
+```
+
+Larz self-tests it at startup and only uses it if it produces **byte-identical** signatures
+to the pure-Python code, so it can never cause a consensus fork — if anything differs it
+silently falls back. Check which backend is active:
+
+```bash
+curl http://127.0.0.1:9333/health   # "backend": "native (coincurve)" or "pure-python"
+```
+
+`coincurve` is **optional** — Larz stays zero-dependency by default.
+
 ## Notes
 
 - **No phone-home.** A node only talks to peers and (optionally) the published
