@@ -214,14 +214,18 @@ class Node:
         if n >= PEER_BAN_FAILS:
             self._drop_peer(peer)
 
+    _UA = "larzchain/%s" % __version__
+
     def _get(self, peer, path):
-        with urllib.request.urlopen(peer + path, timeout=5) as r:
+        req = urllib.request.Request(peer + path, headers={"User-Agent": self._UA})
+        with urllib.request.urlopen(req, timeout=5) as r:
             return json.loads(r.read().decode())
 
     def _post(self, peer, path, obj):
         data = json.dumps(obj).encode()
         req = urllib.request.Request(peer + path, data=data,
-                                     headers={"Content-Type": "application/json"})
+                                     headers={"Content-Type": "application/json",
+                                              "User-Agent": self._UA})
         with urllib.request.urlopen(req, timeout=5) as r:
             return json.loads(r.read().decode())
 
@@ -273,7 +277,7 @@ class Node:
         candidates = list(self.peers) + list(self.seeds)
         # fetch the published seed list (best-effort)
         try:
-            with urllib.request.urlopen(K.SEEDS_URL, timeout=5) as r:
+            with urllib.request.urlopen(urllib.request.Request(K.SEEDS_URL, headers={"User-Agent": self._UA}), timeout=5) as r:
                 for line in r.read().decode().splitlines():
                     line = line.strip()
                     if line and not line.startswith("#"):
@@ -382,7 +386,7 @@ class Node:
 
     def _version_check(self):
         try:
-            with urllib.request.urlopen(K.VERSION_URL, timeout=5) as r:
+            with urllib.request.urlopen(urllib.request.Request(K.VERSION_URL, headers={"User-Agent": self._UA}), timeout=5) as r:
                 latest = r.read().decode().strip().split()[0]
             if latest and latest != __version__ and self._newer(latest, __version__):
                 if self.update_available != latest:
