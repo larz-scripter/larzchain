@@ -47,11 +47,19 @@ def cmd_wallet_new(a):
 
 def cmd_node(a):
     addr = a.address or Wallet().address
-    node = Node(port=a.port, miner_address=addr)
+    seeds = None
+    if a.seeds is not None:
+        seeds = [s for s in a.seeds.split(",") if s.strip()]
+    node = Node(port=a.port, miner_address=addr, public_url=a.public_url,
+                persist_path=a.persist, seeds=seeds, report_url=a.report_url,
+                log_path=a.log)
     for p in (a.peer or []):
         node.add_peer(p)
-    node.start(background=True)
+    node.start(background=True, bootstrap=not a.no_bootstrap)
     print("LarzChain node on %s  (miner -> %s)" % (node.url, addr))
+    print("  network=%s  genesis=%s" % (node.network_id, node.genesis[:12]))
+    if not a.no_bootstrap:
+        print("  bootstrapping from seeds: %s" % (", ".join(node.seeds) or "(none)"))
     if a.mine:
         print("auto-mining every ~%ds..." % K.TARGET_BLOCK_TIME)
         def loop():
@@ -101,6 +109,13 @@ def main(argv=None):
     pn.add_argument("--peer", action="append")
     pn.add_argument("--address")
     pn.add_argument("--mine", action="store_true")
+    pn.add_argument("--public-url", help="the URL peers dial back (e.g. https://node.example.com)")
+    pn.add_argument("--seeds", help="comma-separated seed node URLs (overrides built-in)")
+    pn.add_argument("--persist", help="path to persist the chain + peers")
+    pn.add_argument("--report-url", help="opt-in: POST health/errors here (off by default)")
+    pn.add_argument("--log", help="also write logs to this file")
+    pn.add_argument("--no-bootstrap", action="store_true", help="do not contact seeds on start")
+
 
     pb = sub.add_parser("balance")
     pb.add_argument("--node", required=True)

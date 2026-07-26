@@ -1,0 +1,4 @@
+# LarzChain testnet seed nodes — one node URL per line, '#' for comments.
+# Nodes fetch this at startup (published at https://larzos.com/larzchain/seeds.txt)
+# and dial each with /hello. The list can grow without a client release.
+https://larzos.com/larzchain/rpc

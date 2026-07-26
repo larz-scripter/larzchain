@@ -6,7 +6,7 @@ Pure Python, zero dependencies.**
 > ⚠️ **Experimental.** LARZ is **not an investment**, carries **no promise of
 > value**, and **may be worth nothing**. There is **no sale** — coins come into
 > existence only by mining, and are distributed only by mining rewards and a
-> transparent, on-chain community airdrop. See [`PLAN.md`](PLAN.md). Networking/P2P plan: [`docs/NETWORKING.md`](docs/NETWORKING.md).
+> transparent, on-chain community airdrop. See [`PLAN.md`](PLAN.md). Networking/P2P plan: [`docs/NETWORKING.md`](docs/NETWORKING.md) · Run a node: [`RUN_A_NODE.md`](RUN_A_NODE.md) · Wire protocol: [`docs/NETWORK.md`](docs/NETWORK.md).
 
 LarzChain is a real, working blockchain built from first principles — the same
 zero-dependency ethos as the [Larz framework](https://github.com/larz-scripter/larz),

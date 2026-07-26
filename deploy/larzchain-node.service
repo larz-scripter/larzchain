@@ -1,0 +1,24 @@
+# LarzChain node as a systemd service.
+#   sudo cp deploy/larzchain-node.service /etc/systemd/system/
+#   edit paths + --public-url, then:  sudo systemctl enable --now larzchain-node
+[Unit]
+Description=LarzChain node
+After=network.target
+
+[Service]
+Type=simple
+# adjust to where you cloned the repo:
+WorkingDirectory=/opt/larzchain
+ExecStart=/usr/bin/python3 -m larzchain node \
+  --port 9333 \
+  --persist /var/lib/larzchain/chain.json \
+  --log /var/log/larzchain-node.log \
+  --public-url http://CHANGE-ME:9333
+Restart=always
+RestartSec=5
+# create /var/lib/larzchain first, owned by this user:
+User=larzchain
+Group=larzchain
+
+[Install]
+WantedBy=multi-user.target

@@ -90,3 +90,18 @@ def make_genesis():
     while not block.header.pow_valid():
         block.header.nonce += 1
     return block
+
+
+# --- P2P network identity + bootstrap (testnet) --------------------------- #
+# A node only peers with others on the same NETWORK_ID *and* genesis hash, so
+# testnet and any future mainnet never cross-connect. Bump NETWORK_ID for a new
+# network. Seeds are estate-run bootstrap nodes; the list can grow at runtime via
+# the published SEEDS_URL without a client release.
+NETWORK_ID = "larz-testnet-1"
+PROTOCOL_VERSION = 1
+DEFAULT_PORT = 9333
+SEED_NODES = [
+    "https://larzos.com/larzchain/rpc",     # estate seed (Apache -> :9333)
+]
+SEEDS_URL = "https://larzos.com/larzchain/seeds.txt"
+VERSION_URL = "https://larzos.com/larzchain/version.txt"

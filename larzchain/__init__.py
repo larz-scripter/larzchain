@@ -8,4 +8,4 @@ explorer + airdrop service.
 
 Earned, never sold. No premine. See PLAN.md.
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"

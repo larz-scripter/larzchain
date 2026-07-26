@@ -120,9 +120,9 @@ Mismatched `network_id`/`genesis` → `409 Conflict`, connection dropped.
 
 ## Milestones
 
-- [ ] P1 identity + `/hello` handshake + public-url advertising
-- [ ] P2 seed bootstrap + `seeds.txt` + peer persistence/management
-- [ ] P3 incremental (headers-first) sync
-- [ ] P4 rate limits / size caps / ban list
-- [ ] P5 `RUN_A_NODE.md` + Dockerfile + systemd + `NETWORK.md` + integration tests
+- [x] P1 identity + `/hello` handshake + public-url advertising
+- [x] P2 seed bootstrap + `seeds.txt` + peer persistence/management
+- [x] P3 incremental (headers-first) sync
+- [x] P4 rate limits / size caps / ban list
+- [x] P5 `RUN_A_NODE.md` + Dockerfile + systemd + `NETWORK.md` + integration tests
 - [ ] P6 estate seed nodes live + published join guide (testnet launch)
