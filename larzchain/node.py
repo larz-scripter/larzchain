@@ -29,6 +29,7 @@ from .tx import Transaction
 from .miner import assemble_block, mine
 from . import consensus as K
 from . import __version__
+from . import crypto as _crypto
 
 MAX_BODY = 4 * 1024 * 1024          # 4 MB cap on any POST body
 RATE_WINDOW = 60                    # seconds
@@ -441,14 +442,15 @@ class Node:
                     "work": self.chain.work[tip.hash],
                     "supply": self.chain.total_supply(),
                     "mempool": len(self.mempool),
-                    "peers": list(self.peers), "url": self.url,
+                    "peers": list(self.peers), "url": self.url, "backend": _crypto.backend(),
                     "update_available": self.update_available}
 
     def health(self):
         return {"ok": True, "version": __version__, "network_id": self.network_id,
                 "height": self.chain.height, "peers": len(self.peers),
                 "mempool": len(self.mempool), "uptime_s": int(time.time() - self.started_at),
-                "errors": self.stats["errors"], "update_available": self.update_available}
+                "errors": self.stats["errors"], "backend": _crypto.backend(),
+                "update_available": self.update_available}
 
     def debug(self):
         return {"stats": dict(self.stats), "peers": sorted(self.peers),
@@ -645,8 +647,8 @@ class Node:
         threading.Thread(target=self._sync_loop, args=(sync_interval,), daemon=True).start()
         if self.report_url:
             threading.Thread(target=self._report_loop, daemon=True).start()
-        self.log.info("node up at %s (network=%s genesis=%s)",
-                      self.url, self.network_id, self.genesis[:12])
+        self.log.info("node up at %s (network=%s genesis=%s crypto=%s)",
+                      self.url, self.network_id, self.genesis[:12], _crypto.backend())
         if bootstrap and (self.seeds or self.peers):
             threading.Thread(target=self.bootstrap, daemon=True).start()
         if not background:
