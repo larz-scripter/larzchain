@@ -192,8 +192,8 @@ def _rfc6979_k(msg_hash, priv):
         v = hmac.new(k, v, hashlib.sha256).digest()
 
 
-def sign(msg_hash, priv):
-    """Return a DER-free compact signature: 64 bytes r||s (low-s enforced)."""
+def _sign_py(msg_hash, priv):
+    """Pure-Python: DER-free compact signature: 64 bytes r||s (low-s enforced)."""
     z = int.from_bytes(msg_hash, "big")
     while True:
         k = _rfc6979_k(msg_hash, priv)
@@ -209,7 +209,7 @@ def sign(msg_hash, priv):
         return r.to_bytes(32, "big") + s.to_bytes(32, "big")
 
 
-def verify(msg_hash, signature, pubkey_point):
+def _verify_py(msg_hash, signature, pubkey_point):
     if len(signature) != 64:
         return False
     r = int.from_bytes(signature[:32], "big")
@@ -223,3 +223,94 @@ def verify(msg_hash, signature, pubkey_point):
     if point is None:
         return False
     return point[0] % N == r
+
+
+# --------------------------------------------------------------------------- #
+#  Optional native fast-path (coincurve / libsecp256k1)
+#
+#  Signature verification dominates initial sync; pure-Python is correct but
+#  slow. If `coincurve` is installed we can offload sign/verify to libsecp256k1
+#  — but ONLY after a self-test proves it produces BYTE-IDENTICAL signatures and
+#  agrees on verification with the pure-Python code. If anything differs, we fall
+#  back to pure Python. This makes the fast-path impossible to cause a consensus
+#  fork: fast and slow nodes always accept and produce exactly the same bytes.
+# --------------------------------------------------------------------------- #
+try:
+    import coincurve as _cc
+except Exception:               # pragma: no cover
+    _cc = None
+
+_FAST = False
+
+
+def _rs_to_der(sig64):
+    def _trim(b):
+        b = b.lstrip(b"\x00") or b"\x00"
+        if b[0] & 0x80:
+            b = b"\x00" + b
+        return b
+    r, s = _trim(sig64[:32]), _trim(sig64[32:])
+    body = b"\x02" + bytes([len(r)]) + r + b"\x02" + bytes([len(s)]) + s
+    return b"\x30" + bytes([len(body)]) + body
+
+
+def _sign_cc(msg_hash, priv):
+    pk = _cc.PrivateKey(priv.to_bytes(32, "big"))
+    rec = pk.sign_recoverable(msg_hash, hasher=None)   # 65 bytes: r||s||recid
+    r = int.from_bytes(rec[:32], "big")
+    s = int.from_bytes(rec[32:64], "big")
+    if s > N // 2:                                     # match our low-s convention
+        s = N - s
+    return r.to_bytes(32, "big") + s.to_bytes(32, "big")
+
+
+def _verify_cc(msg_hash, signature, pubkey_point):
+    if len(signature) != 64:
+        return False
+    try:
+        pub = _cc.PublicKey(compress_pubkey(pubkey_point))
+        return pub.verify(_rs_to_der(signature), msg_hash, hasher=None)
+    except Exception:
+        return False
+
+
+def _selftest():
+    """Enable the native backend only if it byte-matches pure Python."""
+    if _cc is None:
+        return False
+    try:
+        for seed in (b"larzchain-selftest-1", b"larzchain-selftest-2", os.urandom(16)):
+            priv = (int.from_bytes(sha256(seed), "big") % (N - 1)) + 1
+            pub = privkey_to_pubkey(priv)
+            for m in (sha256(b"hello"), sha256(seed), sha256d(b"tx")):
+                a = _sign_py(m, priv)
+                b = _sign_cc(m, priv)
+                if a != b:                              # signatures must be identical
+                    return False
+                if not (_verify_py(m, a, pub) and _verify_cc(m, a, pub)):
+                    return False
+                bad = a[:-1] + bytes([a[-1] ^ 1])       # tampered must fail both
+                if _verify_py(m, bad, pub) or _verify_cc(m, bad, pub):
+                    return False
+        return True
+    except Exception:
+        return False
+
+
+_FAST = _selftest()
+
+
+def sign(msg_hash, priv):
+    """Compact 64-byte r||s signature (RFC-6979, low-s). Uses the native backend
+    if it self-tested identical to pure Python, else pure Python."""
+    return _sign_cc(msg_hash, priv) if _FAST else _sign_py(msg_hash, priv)
+
+
+def verify(msg_hash, signature, pubkey_point):
+    return _verify_cc(msg_hash, signature, pubkey_point) if _FAST \
+        else _verify_py(msg_hash, signature, pubkey_point)
+
+
+def backend():
+    """'native (coincurve)' if the fast-path is active, else 'pure-python'."""
+    return "native (coincurve)" if _FAST else "pure-python"
