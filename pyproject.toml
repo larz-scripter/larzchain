@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "larzchain"
-version = "0.2.0"
+version = "0.2.1"
 description = "LarzCoin (LARZ) — a fair-launch, proof-of-work cryptocurrency. Pure Python, zero dependencies. Earned, never sold."
 readme = "README.md"
 requires-python = ">=3.7"
@@ -21,7 +21,9 @@ dependencies = []
 larzchain = "larzchain.cli:main"
 
 [project.urls]
-Homepage = "https://larzos.com/larz"
+Homepage = "https://larzos.com/larzchain/"
+Repository = "https://github.com/larz-scripter/larzchain"
+Documentation = "https://larzos.com/larzchain/run-a-node/"
 
 [tool.setuptools.packages.find]
 include = ["larzchain*"]
