@@ -43,8 +43,11 @@ class Wallet:
             out.extend((op, o) for op, o in chain.utxos_for(a))
         return out
 
-    def send(self, chain, to_address, amount, fee=0):
-        """Build + sign a tx sending `amount` sparks to `to_address`."""
+    def send(self, chain, to_address, amount, fee=0, note=""):
+        """Build + sign a tx sending `amount` sparks to `to_address`.
+
+        `note` attaches an arbitrary tag committed by the signature (useful for
+        on-chain data commitments / anchors)."""
         amount, fee = int(amount), int(fee)
         need = amount + fee
         selected, gathered = [], 0
@@ -62,7 +65,7 @@ class Wallet:
         if change > 0:
             outputs.append(TxOutput(change, self.address))     # change back to us
 
-        tx = Transaction(inputs, outputs)
+        tx = Transaction(inputs, outputs, note=note)
         privkeys = [self.keys[o.address] for _, o in selected]
         tx.sign(privkeys)
         return tx

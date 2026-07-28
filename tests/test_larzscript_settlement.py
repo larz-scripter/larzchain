@@ -80,6 +80,17 @@ class TestOnChainSettlement(unittest.TestCase):
 
 
 @unittest.skipUnless(_HAVE_LZ, "larzscript not importable")
+class TestAnchor(unittest.TestCase):
+    def test_anchor_commits_a_tag_on_chain_and_is_findable(self):
+        s = _fresh_settlement(port=19805)
+        s.fund("committer", 1)
+        tag = "c57f125bb4caf665"                      # e.g. a contract state hash
+        txid = s.anchor("committer", tag)
+        self.assertEqual(s.find_anchor(tag), txid)     # the commitment is on-chain
+        self.assertIsNone(s.find_anchor("not-anchored"))
+
+
+@unittest.skipUnless(_HAVE_LZ, "larzscript not importable")
 class TestDecline(unittest.TestCase):
     def test_overspend_is_declined_and_moves_no_money(self):
         s = _fresh_settlement(port=19804)

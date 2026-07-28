@@ -72,6 +72,17 @@ ecosystem-native pricing unit, not a USD peg. See
 Needs `larzscript` installed (`pip install larzchain[larzscript]`); core
 larzchain does not.
 
+**Anchor a contract commitment.** A Larzscript *contract*'s state hashes to a
+commitment (`Contract.state_hash()`); `settle.anchor(name, state_hash)` writes it
+into a transaction note, permanently recording the commitment on-chain, and
+`settle.find_anchor(state_hash)` returns the txid so anyone can verify it landed:
+
+```python
+h = contract.state_hash()          # sha256 commitment to the contract's state
+txid = settle.anchor("committer", h)   # OP_RETURN-style on-chain data anchor
+settle.find_anchor(h) == txid          # verifiable by anyone
+```
+
 ## Coin parameters
 
 | | |

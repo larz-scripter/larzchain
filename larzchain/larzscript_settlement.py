@@ -144,6 +144,33 @@ class LarzChainSettlement(Settlement):
         self.mine(note="fund-" + name)
         return tx.txid
 
+    def anchor(self, name, tag, amount_sparks=1):
+        """Commit an arbitrary ``tag`` on-chain (e.g. a Larzscript contract's
+        ``state_hash()``) as an OP_RETURN-style data anchor.
+
+        Sends a tiny ``amount_sparks`` self-payment from ``name`` carrying the
+        tag as the transaction note, so the commitment is permanently recorded
+        in a block. Returns the on-chain txid.
+        """
+        payer = self._wallet(name)
+        tx = payer.send(self.chain, payer.address, int(amount_sparks),
+                        note="lzc:" + str(tag))
+        if not self.node.submit_tx(tx, gossip=False):
+            raise SettlementError("anchor tx for '%s' was not accepted" % name)
+        self.broadcast.append(tx.txid)
+        self.mine(note="anchor")
+        return tx.txid
+
+    def find_anchor(self, tag):
+        """Return the txid whose note commits ``tag`` (searching the active
+        chain), or None. Lets anyone verify a commitment landed on-chain."""
+        want = "lzc:" + str(tag)
+        for block in self.chain.blocks:
+            for tx in block.transactions:
+                if getattr(tx, "note", "") == want:
+                    return tx.txid
+        return None
+
     # -- the settlement path (called by Larzscript's pay/subscribe) -------- #
     #
     # We override transfer() rather than the authorize()/record() hooks because
