@@ -17,6 +17,13 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+# `larzpay.py` bridges LARZ into the Larz web framework's money layer.
+larzpay = ["larz"]
+# `larzscript_settlement.py` lets the money-native Larzscript language settle
+# its `pay`/`subscribe` on-chain. Core larzchain needs neither.
+larzscript = ["larzscript"]
+
 [project.scripts]
 larzchain = "larzchain.cli:main"
 

@@ -29,6 +29,48 @@ which powers its block explorer and airdrop service.
   (`explorer.py`, `airdrop.py`)
 * **Pay-with-LARZ** — a Larz `PaymentProvider` (`larzpay.py`) so any framework
   `@app.paid` route can be unlocked by an on-chain LARZ payment
+* **Settle Larzscript on-chain** — a settlement backend (`larzscript_settlement.py`)
+  for the money-native [Larzscript](https://github.com/larz-scripter/larzscript)
+  language: every `pay`/`subscribe` in a `.lz` program is authorized against
+  real on-chain LARZ and broadcast as a real signed transaction
+
+## Settle a money-native program on the chain
+
+[Larzscript](https://github.com/larz-scripter/larzscript) is the stack's
+money-native language — `pay ... from ... to ...` is a keyword. It settles every
+payment through a pluggable backend; `larzchain.larzscript_settlement` **is** a
+backend, so the *same unchanged program* settles for real on LarzChain:
+
+```python
+from larzscript import run
+from larzchain.node import Node
+from larzchain.wallet import Wallet
+from larzchain.larzscript_settlement import LarzChainSettlement
+
+treasury = Wallet()
+node = Node(port=9333, miner_address=treasury.address, faucet_wallet=treasury)
+
+settle = LarzChainSettlement(node)   # auto-mines each payment into a block
+settle.mine_reward(2)                # mine some LARZ to the treasury (dev)
+settle.fund("customer", 50)          # 50 LARZ -> the program's "customer" wallet
+
+run('''
+    wallet customer = $50.00
+    wallet store
+    pay $12.00 from customer to store    # <- becomes a real signed LARZ tx
+''', settlement=settle)
+
+settle.balances()     # {'customer': 38.0, 'store': 12.0}  (LARZ, confirmed)
+settle.broadcast      # the on-chain txids that settled
+```
+
+An over-spend is **declined before any money moves** (the payer's confirmed
+on-chain balance is checked first), so there's never a partial settlement. Unit
+convention (like `larzpay`): **1 price-unit ($1.00) = 1 LARZ**, an
+ecosystem-native pricing unit, not a USD peg. See
+`examples/larzscript_onchain.py` and `tests/test_larzscript_settlement.py`.
+Needs `larzscript` installed (`pip install larzchain[larzscript]`); core
+larzchain does not.
 
 ## Coin parameters
 
